@@ -3,6 +3,8 @@ Helpers for various likelihood-based losses. These are ported from the original
 Ho et al. diffusion models codebase:
 https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/utils.py
 """
+# 这段代码实现了基于高斯分布（正态分布）的似然损失计算工具，主要用于扩散模型（Diffusion Models）中的概率计算。
+# 这段代码是扩散模型中概率计算的核心组件，直接影响了生成质量和训练稳定性。
 
 import numpy as np
 
@@ -10,6 +12,7 @@ import torch as th
 
 
 def normal_kl(mean1, logvar1, mean2, logvar2):
+    # 计算两个高斯分布之间的KL散度（Kullback-Leibler Divergence）
     """
     Compute the KL divergence between two gaussians.
 
@@ -29,7 +32,7 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
         x if isinstance(x, th.Tensor) else th.tensor(x).to(tensor)
         for x in (logvar1, logvar2)
     ]
-    
+
     return 0.5 * (
             -1.0
             + logvar2
@@ -40,6 +43,8 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
 
 
 def approx_standard_normal_cdf(x):
+    # 快速近似标准正态分布的累积分布函数（CDF）
+    # 在离散化高斯似然计算中替代精确CDF，提升计算效率。
     """
     A fast approximation of the cumulative distribution function of the
     standard normal.
@@ -48,6 +53,7 @@ def approx_standard_normal_cdf(x):
 
 
 def discretized_gaussian_log_likelihood(x, *, means, log_scales):
+    # 计算离散化高斯分布的对数似然（用于图像数据）
     """
     Compute the log-likelihood of a Gaussian distribution discretizing to a
     given image.

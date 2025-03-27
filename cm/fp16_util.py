@@ -1,5 +1,7 @@
 """
 Helpers to train with 16-bit precision.
+这段代码实现了一个混合精度训练（Mixed Precision Training）的工具集，
+主要用于在PyTorch中以16位浮点数（FP16）和32位浮点数（FP32）混合的方式训练模型，以节省显存并加速计算，同时避免数值溢出问题。
 """
 
 import numpy as np
@@ -55,7 +57,7 @@ def model_grads_to_master_grads(param_groups_and_shapes, master_params):
     from make_master_params().
     """
     for master_param, (param_group, shape) in zip(
-        master_params, param_groups_and_shapes
+            master_params, param_groups_and_shapes
     ):
         master_param.grad = _flatten_dense_tensors(
             [param_grad_or_zeros(param) for (_, param) in param_group]
@@ -70,7 +72,7 @@ def master_params_to_model_params(param_groups_and_shapes, master_params):
     # silently not copy any parameters.
     for master_param, (param_group, _) in zip(master_params, param_groups_and_shapes):
         for (_, param), unflat_master_param in zip(
-            param_group, unflatten_master_params(param_group, master_param.view(-1))
+                param_group, unflatten_master_params(param_group, master_param.view(-1))
         ):
             param.detach().copy_(unflat_master_param)
 
@@ -93,15 +95,15 @@ def get_param_groups_and_shapes(named_model_params):
 
 
 def master_params_to_state_dict(
-    model, param_groups_and_shapes, master_params, use_fp16
+        model, param_groups_and_shapes, master_params, use_fp16
 ):
     if use_fp16:
         state_dict = model.state_dict()
         for master_param, (param_group, _) in zip(
-            master_params, param_groups_and_shapes
+                master_params, param_groups_and_shapes
         ):
             for (name, _), unflat_master_param in zip(
-                param_group, unflatten_master_params(param_group, master_param.view(-1))
+                    param_group, unflatten_master_params(param_group, master_param.view(-1))
             ):
                 assert name in state_dict
                 state_dict[name] = unflat_master_param
@@ -147,12 +149,12 @@ def param_grad_or_zeros(param):
 
 class MixedPrecisionTrainer:
     def __init__(
-        self,
-        *,
-        model,
-        use_fp16=False,
-        fp16_scale_growth=1e-3,
-        initial_lg_loss_scale=INITIAL_LOG_LOSS_SCALE,
+            self,
+            *,
+            model,
+            use_fp16=False,
+            fp16_scale_growth=1e-3,
+            initial_lg_loss_scale=INITIAL_LOG_LOSS_SCALE,
     ):
         self.model = model
         self.use_fp16 = use_fp16
@@ -175,7 +177,7 @@ class MixedPrecisionTrainer:
 
     def backward(self, loss: th.Tensor, retain_graph=False):
         if self.use_fp16:
-            loss_scale = 2**self.lg_loss_scale
+            loss_scale = 2 ** self.lg_loss_scale
             (loss * loss_scale).backward(retain_graph=retain_graph)
         else:
             loss.backward()
@@ -189,7 +191,7 @@ class MixedPrecisionTrainer:
     def _optimize_fp16(self, opt: th.optim.Optimizer):
         logger.logkv_mean("lg_loss_scale", self.lg_loss_scale)
         model_grads_to_master_grads(self.param_groups_and_shapes, self.master_params)
-        grad_norm, param_norm = self._compute_norms(grad_scale=2**self.lg_loss_scale)
+        grad_norm, param_norm = self._compute_norms(grad_scale=2 ** self.lg_loss_scale)
         if check_overflow(grad_norm):
             self.lg_loss_scale -= 1
             logger.log(f"Found NaN, decreased lg_loss_scale to {self.lg_loss_scale}")
@@ -200,7 +202,7 @@ class MixedPrecisionTrainer:
         logger.logkv_mean("param_norm", param_norm)
 
         for p in self.master_params:
-            p.grad.mul_(1.0 / (2**self.lg_loss_scale))
+            p.grad.mul_(1.0 / (2 ** self.lg_loss_scale))
         opt.step()
         zero_master_grads(self.master_params)
         master_params_to_model_params(self.param_groups_and_shapes, self.master_params)

@@ -2,6 +2,8 @@
 Logger copied from OpenAI baselines to avoid extra RL-based dependencies:
 https://github.com/openai/baselines/blob/ea25b9e8b234e6ee1bca43083f8f3cf974143998/baselines/logger.py
 """
+# 这段代码实现了一个灵活的日志记录系统（Logger）
+# 主要用于在机器学习实验（如强化学习、扩散模型等）中记录和管理训练过程中的关键指标（如损失、准确率等）。
 
 import os
 import sys
@@ -40,7 +42,7 @@ class HumanOutputFormat(KVWriter, SeqWriter):
             self.own_file = True
         else:
             assert hasattr(filename_or_file, "read"), (
-                "expected file or str, got %s" % filename_or_file
+                    "expected file or str, got %s" % filename_or_file
             )
             self.file = filename_or_file
             self.own_file = False
@@ -492,4 +494,3 @@ def scoped_configure(dir=None, format_strs=None, comm=None):
     finally:
         Logger.CURRENT.close()
         Logger.CURRENT = prevlogger
-

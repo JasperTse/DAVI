@@ -1,3 +1,54 @@
+"""
+这段代码实现了一个完整的扩散模型（Diffusion Model）的核心架构，主要包含以下几个关键部分：
+
+1. 核心组件
+UNet主干网络 (UNetModel)：
+包含下采样和上采样路径的对称结构
+支持时间步嵌入（timestep embedding）和类别条件（class-conditional）
+集成残差块（ResBlock）和注意力机制（AttentionBlock）
+残差块 (ResBlock)：
+支持时间步条件注入
+可选的上/下采样操作
+使用scale-shift归一化（类似FiLM的条件机制）
+注意力机制：
+两种注意力实现（QKVAttention和QKVAttentionLegacy）
+支持多头注意力（multi-head attention）
+空间池化 (AttentionPool2d)：
+改编自CLIP的注意力池化层
+用于特征压缩和提取
+
+2. 关键特性
+多维度支持：通过dims参数支持1D/2D/3D数据
+混合精度训练：提供convert_to_fp16/fp32方法
+梯度检查点：通过use_checkpoint节省显存
+灵活的条件机制：
+时间步嵌入（timestep embedding）
+类别条件（class-conditional）
+超分辨率条件（SuperResModel处理低分辨率输入）
+多种池化策略：
+自适应平均池化（adaptive avg pooling）
+注意力池化（attention pooling）
+空间池化（spatial pooling）
+
+3. 衍生模型
+超分辨率模型 (SuperResModel)：
+继承UNet并扩展低分辨率输入处理
+通过双线性插值对齐分辨率
+编码器模型 (EncoderUNetModel)：
+仅包含UNet的下采样部分
+用于特征提取和嵌入学习
+
+4. 设计亮点
+模块化架构：各组件（残差块、注意力等）可独立替换
+内存优化：梯度检查点和混合精度支持
+灵活扩展：通过继承轻松创建变体（如超分辨率模型）
+高效注意力：提供两种注意力实现以适应不同需求
+
+总结
+这段代码实现了一个功能完整、高度可配置的扩散模型架构，支持图像生成、超分辨率等多种任务。
+其核心是通过UNet结构结合时间步条件机制，配合注意力层和残差块，实现高质量的特征学习和生成。
+"""
+
 from abc import abstractmethod
 
 import math
@@ -25,15 +76,15 @@ class AttentionPool2d(nn.Module):
     """
 
     def __init__(
-        self,
-        spacial_dim: int,
-        embed_dim: int,
-        num_heads_channels: int,
-        output_dim: int = None,
+            self,
+            spacial_dim: int,
+            embed_dim: int,
+            num_heads_channels: int,
+            output_dim: int = None,
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
+            th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
@@ -205,7 +256,7 @@ class ResBlock(TimestepBlock):
         )
         self.out_layers = nn.Sequential(
             normalization(self.out_channels),
-            #nn.GroupNorm(32, self.out_channels),
+            # nn.GroupNorm(32, self.out_channels),
             nn.SiLU(),
             nn.Dropout(p=dropout),
             zero_module(
@@ -284,7 +335,7 @@ class AttentionBlock(nn.Module):
             self.num_heads = channels // num_head_channels
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
-        #self.norm = nn.GroupNorm(32, channels)
+        # self.norm = nn.GroupNorm(32, channels)
         self.qkv = conv_nd(1, channels, channels * 3, 1)
         if use_new_attention_order:
             # split qkv before split heads
@@ -653,7 +704,7 @@ class UNetModel(nn.Module):
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
-        #h = x.type(self.dtype)
+        # h = x.type(self.dtype)
         h = x
         for module in self.input_blocks:
             h = module(h, emb)
@@ -662,7 +713,7 @@ class UNetModel(nn.Module):
         for module in self.output_blocks:
             h = th.cat([h, hs.pop()], dim=1)
             h = module(h, emb)
-        #h = h.type(x.dtype)
+        # h = h.type(x.dtype)
         return self.out(h)
 
 

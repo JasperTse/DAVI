@@ -6,6 +6,10 @@ from scipy.stats import norm
 import torch.distributed as dist
 
 
+# 这段代码实现了一个扩散模型（Diffusion Models）中的时间步调度采样器（ScheduleSampler）系统
+# 用于在训练过程中动态调整不同时间步（timestep）的采样概率，从而优化训练效率。
+# 通过非均匀采样时间步，减少扩散模型训练时的方差（variance），加速收敛。
+
 def create_named_schedule_sampler(name, diffusion):
     """
     Create a ScheduleSampler from a library of pre-defined samplers.
@@ -137,7 +141,7 @@ class LossSecondMomentResampler(LossAwareSampler):
     def weights(self):
         if not self._warmed_up():
             return np.ones([self.diffusion.num_timesteps], dtype=np.float64)
-        weights = np.sqrt(np.mean(self._loss_history**2, axis=-1))
+        weights = np.sqrt(np.mean(self._loss_history ** 2, axis=-1))
         weights /= np.sum(weights)
         weights *= 1 - self.uniform_prob
         weights += self.uniform_prob / len(weights)

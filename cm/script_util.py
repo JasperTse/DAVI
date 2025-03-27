@@ -4,11 +4,17 @@ from .unet import UNetModel
 from cm import gaussian_diffusion as gd
 from cm.respace import SpacedDiffusion, space_timesteps
 
+# 这段代码实现了一个扩散模型（Diffusion Model）的构建系统，包含模型架构定义、扩散过程配置和参数管理等功能。
+# 这段代码是扩散模型实现的核心配置系统，被用于训练和采样高分辨率图像生成模型（如人脸、自然场景）。
+# 其模块化设计支持快速实验不同的模型架构和扩散参数。
+
 NUM_CLASSES = 1000
 
+
 def ffhq_model_and_ppb_diffusion_defaults():
+    # 返回FFHQ数据集（256x256人脸图像）的默认参数：
     return dict(
-        image_size=256,        
+        image_size=256,
         class_cond=False,
         learn_sigma=True,
         num_channels=128,
@@ -35,57 +41,62 @@ def ffhq_model_and_ppb_diffusion_defaults():
 
 
 def imagenet_model_and_ppb_diffusion_defaults():
+    # ImageNet数据集（256x256）的默认参数，区别在于：
+    #
+    # 更大的num_channels=256
+    #
+    # 更密集的注意力层"32,16,8"
     return dict(
-        image_size=256,        
+        image_size=256,
         class_cond=False,
         learn_sigma=True,
         num_channels=256,
         num_res_blocks=2,
-        channel_mult="", # default
-        num_heads=4, # default
-        num_head_channels=64, # default
-        num_heads_upsample=-1, # default
+        channel_mult="",  # default
+        num_heads=4,  # default
+        num_head_channels=64,  # default
+        num_heads_upsample=-1,  # default
         attention_resolutions="32,16,8",
-        dropout=0.0, # default
-        diffusion_steps=1000, # default
+        dropout=0.0,  # default
+        diffusion_steps=1000,  # default
         noise_schedule="i2sb",
-        timestep_respacing="", # default
-        use_kl=False, # default
-        predict_xstart=False, # default
-        rescale_timesteps=False, # default
-        rescale_learned_sigmas=False, # default
-        use_checkpoint=False, # default
+        timestep_respacing="",  # default
+        use_kl=False,  # default
+        predict_xstart=False,  # default
+        rescale_timesteps=False,  # default
+        rescale_learned_sigmas=False,  # default
+        use_checkpoint=False,  # default
         use_scale_shift_norm=True,
         resblock_updown=True,
         use_fp16=True,
-        use_new_attention_order=False, # default
+        use_new_attention_order=False,  # default
     )
-    
-    
+
+
 def create_model_and_guided_diffusion(
-    image_size,
-    class_cond,
-    learn_sigma,
-    num_channels,
-    num_res_blocks,
-    channel_mult,
-    num_heads,
-    num_head_channels,
-    num_heads_upsample,
-    attention_resolutions,
-    dropout,
-    diffusion_steps,
-    noise_schedule,
-    timestep_respacing,
-    use_kl,
-    predict_xstart,
-    rescale_timesteps,
-    rescale_learned_sigmas,
-    use_checkpoint,
-    use_scale_shift_norm,
-    resblock_updown,
-    use_fp16,
-    use_new_attention_order,
+        image_size,
+        class_cond,
+        learn_sigma,
+        num_channels,
+        num_res_blocks,
+        channel_mult,
+        num_heads,
+        num_head_channels,
+        num_heads_upsample,
+        attention_resolutions,
+        dropout,
+        diffusion_steps,
+        noise_schedule,
+        timestep_respacing,
+        use_kl,
+        predict_xstart,
+        rescale_timesteps,
+        rescale_learned_sigmas,
+        use_checkpoint,
+        use_scale_shift_norm,
+        resblock_updown,
+        use_fp16,
+        use_new_attention_order,
 ):
     model = create_model(
         image_size,
@@ -119,23 +130,24 @@ def create_model_and_guided_diffusion(
 
 
 def create_model(
-    image_size,
-    num_channels,
-    num_res_blocks,
-    channel_mult="",
-    learn_sigma=False,
-    class_cond=False,
-    use_checkpoint=False,
-    attention_resolutions="16",
-    num_heads=1,
-    num_head_channels=-1,
-    num_heads_upsample=-1,
-    use_scale_shift_norm=False,
-    dropout=0,
-    resblock_updown=False,
-    use_fp16=False,
-    use_new_attention_order=False,
-    augment_dim = 0,
+        # 构建UNet结构的扩散模型：
+        image_size,
+        num_channels,
+        num_res_blocks,
+        channel_mult="",
+        learn_sigma=False,
+        class_cond=False,
+        use_checkpoint=False,
+        attention_resolutions="16",
+        num_heads=1,
+        num_head_channels=-1,
+        num_heads_upsample=-1,
+        use_scale_shift_norm=False,
+        dropout=0,
+        resblock_updown=False,
+        use_fp16=False,
+        use_new_attention_order=False,
+        augment_dim=0,
 ):
     if channel_mult == "":
         if image_size == 512:
@@ -177,16 +189,17 @@ def create_model(
 
 
 def create_gaussian_diffusion(
-    *,
-    steps=1000,
-    learn_sigma=False,
-    sigma_small=False,
-    noise_schedule="linear",
-    use_kl=False,
-    predict_xstart=False,
-    rescale_timesteps=False,
-    rescale_learned_sigmas=False,
-    timestep_respacing="",
+        # 创建配置好的扩散过程：
+        *,
+        steps=1000,
+        learn_sigma=False,
+        sigma_small=False,
+        noise_schedule="linear",
+        use_kl=False,
+        predict_xstart=False,
+        rescale_timesteps=False,
+        rescale_learned_sigmas=False,
+        timestep_respacing="",
 ):
     betas = gd.get_named_beta_schedule(noise_schedule, steps)
     if use_kl:

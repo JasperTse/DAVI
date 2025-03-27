@@ -4,7 +4,11 @@ import torch as th
 from .gaussian_diffusion import GaussianDiffusion
 
 
+# 这段代码实现了扩散模型中的时间步重参数化技术
+# 这段代码是扩散模型高效实现的关键组件，被广泛应用于DDIM、Progressive Distillation等加速技术中。
+
 def space_timesteps(num_timesteps, section_counts):
+    # 将原始扩散过程的时间步划分为多个区间，并在每个区间内按指定数量重新采样时间步，生成一个新的时间步集合。
     """
     Create a list of timesteps to use from an original diffusion process,
     given the number of timesteps we want to take from equally-sized portions
@@ -103,7 +107,7 @@ class SpacedDiffusion(GaussianDiffusion):
 
     def compute_pred_x0(self, t, *args, **kwargs):
         return super().compute_pred_x0(t, *args, **kwargs)
-    
+
     def p_posterior(self, *args, **kwargs):
         return super().p_posterior(*args, **kwargs)
 

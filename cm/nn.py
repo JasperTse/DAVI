@@ -1,13 +1,14 @@
 """
 Various utilities for neural networks.
 """
-
+# 这段代码实现了神经网络中的通用工具函数和模块，主要用于构建和优化扩散模型（Diffusion Models）或其他生成模型。
 import math
 
 import torch as th
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
+
 
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
@@ -18,10 +19,11 @@ class SiLU(nn.Module):
 class GroupNorm32(nn.GroupNorm):
     def forward(self, x):
         return super().forward(x.float()).type(x.dtype)
-        #return super().forward(x)
+        # return super().forward(x)
 
 
 def conv_nd(dims, *args, **kwargs):
+    # 根据输入维度（1D/2D/3D）动态创建卷积或平均池化层，统一接口简化多维度模型设计。
     """
     Create a 1D, 2D, or 3D convolution module.
     """
@@ -42,6 +44,7 @@ def linear(*args, **kwargs):
 
 
 def avg_pool_nd(dims, *args, **kwargs):
+    # 根据输入维度（1D/2D/3D）动态创建卷积或平均池化层，统一接口简化多维度模型设计。
     """
     Create a 1D, 2D, or 3D average pooling module.
     """
